@@ -1,0 +1,50 @@
+{
+  "name": "dmarc-reports",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx --watch server.js",
+    "build": "next build",
+    "start": "node server.js",
+    "start:no-scheduler": "next start",
+    "lint": "next lint",
+    "db:init": "tsx src/scripts/init-db.ts",
+    "fetch:manual": "tsx src/scripts/run-fetcher.ts",
+    "analyze:manual": "tsx src/scripts/run-analyzer.ts",
+    "pipeline:manual": "tsx src/scripts/run-pipeline.ts",
+    "test:notification": "tsx src/scripts/test-notification.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.27.0",
+    "adm-zip": "^0.5.10",
+    "better-sqlite3": "^11.0.0",
+    "clsx": "^2.1.0",
+    "dotenv": "^17.2.3",
+    "fast-xml-parser": "^4.3.0",
+    "imap": "^0.8.19",
+    "mailparser": "^3.7.0",
+    "next": "^14.2.0",
+    "node-cron": "^3.0.3",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "recharts": "^2.12.0",
+    "validator": "^13.11.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.5",
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/imap": "^0.8.40",
+    "@types/mailparser": "^3.4.4",
+    "@types/node": "^20.0.0",
+    "@types/node-cron": "^3.0.11",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@types/validator": "^13.11.0",
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0"
+  }
+}

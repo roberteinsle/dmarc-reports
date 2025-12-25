@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  dmarc-reports:
+    container_name: dmarc-reports
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dmarc-reports:latest
+    restart: unless-stopped
+
+    # Port mapping
+    ports:
+      - "3000:3000"
+
+    # Environment variables (override with .env file)
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_PATH=/app/data/dmarc.db
+      - IMAP_HOST=${IMAP_HOST}
+      - IMAP_PORT=${IMAP_PORT}
+      - IMAP_USER=${IMAP_USER}
+      - IMAP_PASSWORD=${IMAP_PASSWORD}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - POSTAL_API_KEY=${POSTAL_API_KEY}
+      - POSTAL_BASE_URL=${POSTAL_BASE_URL}
+      - NOTIFICATION_TO_EMAIL=${NOTIFICATION_TO_EMAIL}
+      - NOTIFICATION_FROM_EMAIL=${NOTIFICATION_FROM_EMAIL}
+      - CRON_SCHEDULE=${CRON_SCHEDULE:-*/10 * * * *}
+      - CRON_SECRET=${CRON_SECRET}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+
+    # Volume mounts for persistence
+    volumes:
+      # SQLite database persistence
+      - dmarc-data:/app/data
+
+      # Logs persistence (optional, comment out if not needed)
+      - dmarc-logs:/app/logs
+
+      # Optional: Mount .env file directly (alternative to environment variables above)
+      # - ./.env:/app/.env:ro
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Resource limits (adjust based on your needs)
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+    # Network configuration
+    networks:
+      - dmarc-network
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Named volumes for data persistence
+volumes:
+  dmarc-data:
+    driver: local
+    name: dmarc-data
+  dmarc-logs:
+    driver: local
+    name: dmarc-logs
+
+# Network configuration
+networks:
+  dmarc-network:
+    driver: bridge
+    name: dmarc-network
