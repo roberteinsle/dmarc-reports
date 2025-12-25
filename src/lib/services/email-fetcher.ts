@@ -91,7 +91,7 @@ async function processEmail(
   stream: NodeJS.ReadableStream
 ): Promise<void> {
   try {
-    const parsed: ParsedMail = await simpleParser(stream);
+    const parsed = await simpleParser(stream);
     const subject = parsed.subject || 'No Subject';
     const from = parsed.from?.text || 'Unknown';
 
