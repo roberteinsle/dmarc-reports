@@ -16,7 +16,7 @@ Eine vollautomatisierte Webapp zur Verarbeitung, Analyse und Überwachung von DM
 - **Framework:** Next.js 14+ (TypeScript)
 - **Datenbank:** SQLite mit Better SQLite3
 - **AI:** Claude API (Anthropic SDK)
-- **E-Mail:** IMAP für Empfang, Postal API für Versand
+- **E-Mail:** IMAP für Empfang, AWS SES SMTP für Versand
 - **Scheduler:** Node-Cron
 - **Deployment:** Docker
 
@@ -49,7 +49,7 @@ cp .env.example .env
 Bearbeiten Sie `.env` und fügen Sie Ihre Credentials ein:
 - IMAP-Zugangsdaten
 - Claude API Key
-- Postal API Key
+- AWS SES SMTP Credentials
 
 4. **Datenbank initialisieren:**
 ```bash

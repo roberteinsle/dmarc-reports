@@ -37,7 +37,7 @@ fi
 echo ""
 echo "Validating environment variables..."
 
-required_vars="IMAP_HOST IMAP_PORT IMAP_USER IMAP_PASSWORD ANTHROPIC_API_KEY POSTAL_API_KEY POSTAL_BASE_URL NOTIFICATION_TO_EMAIL NOTIFICATION_FROM_EMAIL"
+required_vars="IMAP_HOST IMAP_PORT IMAP_USER IMAP_PASSWORD ANTHROPIC_API_KEY AWS_SES_HOST AWS_SES_PORT AWS_SES_USERNAME AWS_SES_PASSWORD NOTIFICATION_TO_EMAIL NOTIFICATION_FROM_EMAIL"
 
 missing_vars=""
 for var in $required_vars; do
@@ -62,7 +62,8 @@ echo "Configuration:"
 echo "==================================="
 echo "IMAP Server: ${IMAP_HOST}:${IMAP_PORT}"
 echo "IMAP User: ${IMAP_USER}"
-echo "Postal Server: ${POSTAL_BASE_URL}"
+echo "AWS SES SMTP: ${AWS_SES_HOST}:${AWS_SES_PORT}"
+echo "AWS SES Username: ${AWS_SES_USERNAME}"
 echo "Notification To: ${NOTIFICATION_TO_EMAIL}"
 echo "Notification From: ${NOTIFICATION_FROM_EMAIL}"
 echo "Cron Schedule: ${CRON_SCHEDULE}"

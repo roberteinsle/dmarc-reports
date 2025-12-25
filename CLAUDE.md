@@ -11,7 +11,7 @@ DMARC Reports ist eine vollautomatisierte Webapp zur Verarbeitung, Analyse und �
 - **Framework:** Next.js 14+ mit TypeScript
 - **Database:** SQLite mit Better SQLite3
 - **AI Analysis:** Claude API (Anthropic SDK)
-- **Email:** IMAP (node-imap) für Empfang, Postal API für Benachrichtigungen
+- **Email:** IMAP (node-imap) für Empfang, AWS SES SMTP für Benachrichtigungen
 - **Deployment:** Docker Container
 - **Scheduler:** Node-Cron (10-Minuten-Intervall)
 
@@ -119,7 +119,7 @@ docker-compose ps
 - Speichert in `ai_analysis` Tabelle
 - Triggert Notifications bei HIGH/CRITICAL Threats
 
-**Notification Service:** Sendet E-Mails via Postal API nur bei kritischen Bedrohungen, verhindert Duplikate.
+**Notification Service:** Sendet E-Mails via AWS SES SMTP nur bei kritischen Bedrohungen, verhindert Duplikate.
 
 **Scheduler:** Node-Cron läuft alle 10 Minuten, führt gesamte Pipeline aus: Fetch → Parse → Analyze → Notify.
 
@@ -128,7 +128,8 @@ docker-compose ps
 Alle sensiblen Daten in `.env` (siehe `.env.example` als Template):
 - `IMAP_*` - IMAP-Credentials für E-Mail-Abruf
 - `ANTHROPIC_API_KEY` - Claude API Key
-- `POSTAL_*` - Postal API für E-Mail-Versand
+- `AWS_SES_*` - AWS SES SMTP Credentials für E-Mail-Versand
+- `NOTIFICATION_*` - E-Mail-Adressen für Benachrichtigungen
 - `DATABASE_PATH` - SQLite-Datenbankpfad
 - `CRON_SCHEDULE` - Cron-Expression für Scheduler
 
@@ -223,7 +224,7 @@ npm run fetch:manual
 - ✅ Echtzeit-Daten-Fetching
 
 **Phase 5 (Completed):** Benachrichtigungssystem
-- ✅ Postal API Integration (`src/lib/services/notification.ts`)
+- ✅ AWS SES SMTP Integration via nodemailer (`src/lib/services/notification.ts`)
 - ✅ HTML & Plain-Text E-Mail-Templates
 - ✅ Automatische Benachrichtigungen bei HIGH/CRITICAL Threats
 - ✅ Duplikat-Prävention (prüft analysis_id)

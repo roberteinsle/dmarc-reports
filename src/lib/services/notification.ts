@@ -1,8 +1,10 @@
 /**
  * Notification Service
- * Sends email alerts via Postal API for critical DMARC threats
+ * Sends email alerts via AWS SES SMTP for critical DMARC threats
  */
 
+import nodemailer from 'nodemailer';
+import type { Transporter } from 'nodemailer';
 import {
   getNotificationByAnalysisId,
   insertNotification,
@@ -11,36 +13,42 @@ import {
 import { logger } from '../utils/logger';
 import type { AiAnalysis, DmarcReport } from '../db/schema';
 
-interface PostalConfig {
-  apiKey: string;
-  baseUrl: string;
+interface SESConfig {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
   fromEmail: string;
   toEmail: string;
 }
 
-interface PostalResponse {
-  status: string;
-  time: number;
-  flags: Record<string, any>;
-  data: {
-    message_id: string;
-    messages: Record<string, {
-      id: number;
-      token: string;
-    }>;
+/**
+ * Get AWS SES configuration from environment
+ */
+function getSESConfig(): SESConfig {
+  return {
+    host: process.env.AWS_SES_HOST || '',
+    port: parseInt(process.env.AWS_SES_PORT || '587', 10),
+    username: process.env.AWS_SES_USERNAME || '',
+    password: process.env.AWS_SES_PASSWORD || '',
+    fromEmail: process.env.NOTIFICATION_FROM_EMAIL || '',
+    toEmail: process.env.NOTIFICATION_TO_EMAIL || '',
   };
 }
 
 /**
- * Get Postal configuration from environment
+ * Create nodemailer transporter for AWS SES
  */
-function getPostalConfig(): PostalConfig {
-  return {
-    apiKey: process.env.POSTAL_API_KEY || '',
-    baseUrl: process.env.POSTAL_BASE_URL || '',
-    fromEmail: process.env.NOTIFICATION_FROM_EMAIL || '',
-    toEmail: process.env.NOTIFICATION_TO_EMAIL || '',
-  };
+function createSESTransporter(config: SESConfig): Transporter {
+  return nodemailer.createTransport({
+    host: config.host,
+    port: config.port,
+    secure: false, // Use STARTTLS
+    auth: {
+      user: config.username,
+      pass: config.password,
+    },
+  });
 }
 
 /**
@@ -201,41 +209,25 @@ function buildEmailPlain(
 }
 
 /**
- * Send email via Postal API
+ * Send email via AWS SES
  */
-async function sendPostalEmail(
-  config: PostalConfig,
+async function sendSESEmail(
+  config: SESConfig,
   subject: string,
   htmlBody: string,
   plainBody: string
 ): Promise<string> {
-  const response = await fetch(`${config.baseUrl}/api/v1/send/message`, {
-    method: 'POST',
-    headers: {
-      'X-Server-API-Key': config.apiKey,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      to: [config.toEmail],
-      from: config.fromEmail,
-      subject,
-      plain_body: plainBody,
-      html_body: htmlBody,
-    }),
+  const transporter = createSESTransporter(config);
+
+  const info = await transporter.sendMail({
+    from: config.fromEmail,
+    to: config.toEmail,
+    subject,
+    text: plainBody,
+    html: htmlBody,
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Postal API error: ${response.status} - ${errorText}`);
-  }
-
-  const result = (await response.json()) as PostalResponse;
-
-  if (result.status !== 'success') {
-    throw new Error(`Postal API returned status: ${result.status}`);
-  }
-
-  return result.data.message_id;
+  return info.messageId;
 }
 
 /**
@@ -259,10 +251,10 @@ export async function sendThreatNotification(
       return false;
     }
 
-    const config = getPostalConfig();
+    const config = getSESConfig();
 
-    if (!config.apiKey || !config.baseUrl || !config.fromEmail || !config.toEmail) {
-      throw new Error('Postal configuration incomplete');
+    if (!config.host || !config.username || !config.password || !config.fromEmail || !config.toEmail) {
+      throw new Error('AWS SES configuration incomplete');
     }
 
     // Get report details
@@ -282,8 +274,8 @@ export async function sendThreatNotification(
 
     logger.info(`Sending ${analysis.threat_level} threat notification for report ${reportId}`);
 
-    // Send via Postal
-    const messageId = await sendPostalEmail(config, subject, htmlBody, plainBody);
+    // Send via AWS SES
+    const messageId = await sendSESEmail(config, subject, htmlBody, plainBody);
 
     // Save notification record
     insertNotification({
